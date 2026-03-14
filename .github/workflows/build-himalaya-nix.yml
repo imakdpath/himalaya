@@ -27,12 +27,14 @@ jobs:
       - uses: cachix/install-nix-action@v31
         with:
           enable_kvm: true
-      - name: Build (static)
-        run: |          NIXPKGS_REV=$(python3 -c "import json; lock=json.load(open('flake.lock')); print(lock['nodes']['nixpkgs']['locked']['rev'])")
-          export NIX_PATH="nixpkgs=https://github.com/NixOS/nixpkgs/archive/${NIXPKGS_REV}.tar.gz"
-          nix-build             --arg fenix "import (fetchTarball \"https://github.com/soywod/fenix/archive/main.tar.gz\") { }"             --argstr target "${{ inputs.target }}"             --arg isStatic true             --arg defaultFeatures ${{ inputs.defaultFeatures }}             --argstr features "${{ inputs.features }}"
-          cp result/bin/himalaya* .
-          chmod u+w himalaya*
+
+- name: Build (static)
+  run: |
+    NIXPKGS_REV=$(python3 -c "import json; lock=json.load(open('flake.lock')); print(lock['nodes']['nixpkgs']['locked']['rev'])")
+    export NIX_PATH="nixpkgs=https://github.com/NixOS/nixpkgs/archive/${NIXPKGS_REV}.tar.gz"
+    nix-build             --arg fenix "import (fetchTarball \"https://github.com/soywod/fenix/archive/main.tar.gz\") { }"             --argstr target "${{ inputs.target }}"             --arg isStatic true             --arg defaultFeatures ${{ inputs.defaultFeatures }}             --argstr features "${{ inputs.features }}"
+    cp result/bin/himalaya* .
+    chmod u+w himalaya*
       - uses: actions/upload-artifact@v4
         with:
           name: himalaya-${{ inputs.target }}-features-${{ inputs.features }}
