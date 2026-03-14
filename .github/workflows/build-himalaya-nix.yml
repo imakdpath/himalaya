@@ -1,0 +1,38 @@
+name: Build Himalaya (nix)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Nix target triple
+        type: string
+        required: true
+        default: aarch64-unknown-linux-musl
+      features:
+        description: Cargo features (comma-separated)
+        type: string
+        required: true
+        default: oauth2
+      defaultFeatures:
+        description: Enable default cargo features (true|false)
+        type: string
+        required: true
+        default: "true"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+        with:
+          enable_kvm: true
+      - name: Build (static)
+        run: |
+          nix-build             --arg fenix "import (fetchTarball \"https://github.com/soywod/fenix/archive/main.tar.gz\") { }"             --argstr target "${{ inputs.target }}"             --arg isStatic true             --arg defaultFeatures ${{ inputs.defaultFeatures }}             --argstr features "${{ inputs.features }}"
+          cp result/bin/himalaya* .
+          chmod u+w himalaya*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: himalaya-${{ inputs.target }}-features-${{ inputs.features }}
+          path: himalaya*
